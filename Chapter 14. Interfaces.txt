@@ -1,0 +1,30 @@
+14.1 Processor Top-Level Interface
+
+Function
+Defines the external interface of the RV32I processor. These signals connect the processor to instruction memory, data memory, reset circuitry, and the system clock.
+
+Clock and Reset
+Signal	Direction	Width	Description
+CLK	Input		1	System clock
+RESET	Input		1	Processor reset
+
+Instruction Memory Interface
+Signal		Direction	Width	Description
+IMEM_ADDRESS	Output		32	Instruction address
+IMEM_DATA	Input		32	Instruction word
+
+Data Memory Interface
+Signal		Direction	Width	Description
+DMEM_ADDRESS	Output		32	Memory address
+DMEM_WRITE_DATA	Output		32	Data to store
+DMEM_READ_DATA	Input		32	Loaded data
+DMEM_READ	Output		1	Read enable
+DMEM_WRITE	Output		1	Write enable
+
+Hardware Summary
+Processor type: RV32I
+Pipeline: Five-stage
+Instruction width: 32 bits
+Data width: 32 bits
+Address width: 32 bits
+Register count: 32

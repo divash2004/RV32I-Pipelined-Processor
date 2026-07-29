@@ -1,0 +1,91 @@
+11.1 Purpose
+
+The Memory System provides instruction storage and data storage for the processor. A Harvard architecture is adopted, using separate instruction and data memories to eliminate structural hazards between instruction fetch and data access.
+
+11.2 Memory Organization
+
+completely independent memories
+independent address buses
+independent data buses
+
+Completely Independent Memories
+There are two separate memories:
+Instruction Memory stores program instructions.
+Data Memory stores variables and other data.                                                           
+Since they are separate, accessing one does not affect the other.
+
+Independent Address Buses
+An address bus carries the address of the memory location to be accessed.
+Harvard architecture has:
+One address bus for Instruction Memory.
+Another address bus for Data Memory.
+This allows the CPU to send instruction and data addresses at the same time.
+
+Independent Data Buses
+A data bus transfers data between the CPU and memory.
+There are two separate data buses:
+One transfers instructions from Instruction Memory to the CPU.
+The other transfers data between Data Memory and the CPU.
+Both transfers can occur simultaneously.
+
+11.3 Instruction Memory
+Stores the program instructions.
+
+Inputs
+Signal		Width
+Address		32
+
+Outputs
+Signal		Width
+Instruction	32
+
+Characteristics
+Read-only during execution.
+Accessed only during IF.
+One 32-bit instruction per access.
+
+11.4 Data Memory
+Stores program data.
+
+Inputs
+Signal		Width
+Address		32
+Write Data	32
+MEM_READ	1
+MEM_WRITE	1
+
+Outputs
+Signal		Width
+Read Data	32
+
+Characteristics
+Supports LW.
+Supports SW.
+One word per access.
+
+11.5 Supported Operations
+Instruction	Memory Operation
+LW		Read Word
+SW		Write Word
+
+11.6 Memory Access Flow
+
+IF:
+PC-> Instruction Memory -> Instruction
+
+Load:
+ALU -> Address -> Data Memory -> Read Data -> WB
+
+Store:
+RS2 -> Data Memory Write Port -> Memory
+
+11.7 Design Decisions
+
+Why no cache?
+The processor is intended as an educational RTL implementation. Introducing caches would significantly increase design complexity while obscuring the core pipeline concepts.
+
+Why single-cycle memories?
+Ideal single-cycle memories simplify pipeline timing and allow the project to focus on datapath and control logic rather than memory latency.
+
+Why only word accesses?
+The implemented ISA subset contains only LW and SW. Supporting byte and halfword accesses would require additional alignment logic, byte-enable circuitry, and sign/zero extension, none of which introduce fundamentally new architectural concepts for this project.

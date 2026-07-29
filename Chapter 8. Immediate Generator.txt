@@ -1,0 +1,59 @@
+8.1 Purpose
+
+The Immediate Generator extracts the immediate field from the fetched instruction and converts it into a 32-bit value suitable for arithmetic, address generation, and control-flow instructions. The immediate format is selected using the IMM_SEL control signal generated during the Decode stage.
+
+8.2 Interface
+
+Inputs
+Signal		Width	Description
+INSTRUCTION	32	Current instruction
+IMM_SEL		3	Immediate format selector
+
+Outputs
+Signal		Width	Description
+IMMEDIATE	32	Generated immediate
+
+8.3 Supported Immediate Formats
+(same table from 6.2)
+
+IMM_SEL		Format	Used By
+000		R	No immediate
+001		I	ADDI, ANDI, ORI, XORI, SLLI, SRLI, SRAI, LW, JALR, SLTI
+010		S	SW
+011		B	BEQ, BNE, BLT, BGE
+100		U	LUI, AUIPC
+101		J	JAL
+110	    Reserved	—
+111	    Reserved	—
+
+8.4 Immediate Generation
+We will look at what each type does, 
+(refer to Instruction formats)
+I-type: Extract immediate from bits [31:20] and sign-extend.
+S-type: Concatenate bits [31:25] and [11:7], then sign-extend.
+B-type: Rearrange branch offset bits, append an implicit zero LSB, and sign-extend.
+U-type: Place the upper 20 bits in bits [31:12] and clear the lower 12 bits.
+J-type: Rearrange jump offset bits, append an implicit zero LSB, and sign-extend.
+
+8.5 Design Decisions
+
+Why use a dedicated Immediate Generator?
+Decision
+A dedicated combinational module generates all immediate values.
+Why?
+Centralizing immediate extraction avoids duplicating bit-manipulation logic throughout the datapath and allows all instructions requiring immediates to use a common interface.
+
+Why use IMM_SEL?
+The immediate encoding differs among instruction formats. The IMM_SEL control signal selects the appropriate extraction logic while keeping the module interface simple.
+
+Why generate the immediate during Decode?
+Immediate extraction depends only on the instruction bits. Performing this operation during the Decode stage ensures that the Execute stage receives a fully formed 32-bit operand without additional decoding.
+
+Why is an Immediate Generator required?
+RISC-V stores immediate values differently across instruction formats. A dedicated Immediate Generator converts these various encodings into a uniform 32-bit value that can be used by the Execute stage.
+
+Why doesn't the ALU generate the immediate?
+The ALU performs arithmetic and logical operations on operands that have already been prepared. Immediate extraction is a decoding task based solely on instruction bit fields and therefore belongs in the Decode stage.
+
+Which instructions do not use the Immediate Generator?
+Pure register-register (R-type) instructions do not require an immediate operand. For these instructions, IMM_SEL selects the R-type format, and the generated immediate is ignored.

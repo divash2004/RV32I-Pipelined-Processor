@@ -1,0 +1,181 @@
+iverilog -I rtl -o sim/cpu.out rtl/cpu.v rtl/if/pc.v rtl/if/pc_4_adder.v rtl/if/pc_control.v rtl/if/pc_mux.v rtl/if/instruction_memory.v rtl/if/if_id_pipeline.v rtl/id/register_file.v rtl/id/immediate_generator.v rtl/id/main_control_unit.v rtl/id/hazard_detection_unit.v rtl/id/id_ex_pipeline.v rtl/ex/forwarding_unit.v rtl/ex/operand_selection_muxes.v rtl/ex/alu.v rtl/ex/branch_comparator.v rtl/ex/branch_target_adder.v rtl/ex/ex_mem_pipeline.v rtl/mem/data_memory.v rtl/mem/mem_wb_pipeline.v rtl/wb/writeback_mux.v
+
+to make cpu.out
+
+iverilog -I rtl -o sim/cpu.out `
+rtl/cpu.v `
+rtl/if/pc.v `
+rtl/if/pc_4_adder.v `
+rtl/if/pc_control.v `
+rtl/if/pc_mux.v `
+rtl/if/instruction_memory.v `
+rtl/if/if_id_pipeline.v `
+rtl/id/register_file.v `
+rtl/id/immediate_generator.v `
+rtl/id/main_control_unit.v `
+rtl/id/hazard_detection_unit.v `
+rtl/id/id_ex_pipeline.v `
+rtl/ex/forwarding_unit.v `
+rtl/ex/operand_selection_muxes.v `
+rtl/ex/alu.v `
+rtl/ex/branch_comparator.v `
+rtl/ex/branch_target_adder.v `
+rtl/ex/ex_mem_pipeline.v `
+rtl/mem/data_memory.v `
+rtl/mem/mem_wb_pipeline.v `
+rtl/wb/writeback_mux.v `
+tb/tb_cpu.v
+
+This is one of the most important parts of the RTL design workflow. Here's what that command is actually doing.
+
+```powershell
+iverilog -I rtl -o sim/cpu.out ...
+```
+
+breaks down into four parts:
+
+### 1. `iverilog`
+
+This launches the **Icarus Verilog compiler**.
+
+It reads all of your Verilog source files and checks:
+
+* Verilog syntax
+* Module definitions
+* Module instantiations
+* Port connections
+* Signal declarations
+* Width compatibility (to an extent)
+
+---
+
+### 2. `-I rtl`
+
+This tells the **preprocessor** where to search for included header files.
+
+For example, if `cpu.v` contains:
+
+```verilog
+`include "defines.vh"
+```
+
+Icarus looks inside the `rtl` directory to find `defines.vh`.
+
+Without `-I rtl`, compilation would fail if the include file isn't in the current directory.
+
+---
+
+### 3. `-o sim/cpu.out`
+
+This specifies the **output file**.
+
+Instead of producing machine code, Icarus produces a **simulation executable** called:
+
+```text
+sim/cpu.out
+```
+
+Think of it as:
+
+```text
+All your Verilog files
+        │
+        ▼
+  Icarus Verilog Compiler
+        │
+        ▼
+   sim/cpu.out
+```
+
+This file contains the compiled simulation model of your CPU.
+
+---
+
+### 4. The list of `.v` files
+
+```text
+rtl/cpu.v
+rtl/if/pc.v
+rtl/id/register_file.v
+...
+tb/tb_cpu.v
+```
+
+These are all compiled **together** into one design.
+
+The compiler resolves every module reference. For example:
+
+```
+cpu
+ ├── pc
+ ├── register_file
+ ├── alu
+ ├── forwarding_unit
+ └── ...
+```
+
+Each instantiated module is matched with its corresponding source file.
+
+---
+
+## Why `cpu.out` is not the CPU itself
+
+`cpu.out` is **not** FPGA bitstream or hardware.
+
+It's a simulation program.
+
+The next command:
+
+```powershell
+vvp sim/cpu.out
+```
+
+runs that simulation.
+
+Your testbench drives:
+
+* the clock,
+* the reset,
+* and later, test stimuli,
+
+while the compiled design responds exactly as the RTL specifies.
+
+---
+
+## Your complete workflow
+
+```text
+Write Verilog (.v)
+        │
+        ▼
+Compile
+iverilog
+        │
+        ▼
+cpu.out  ← compiled simulation executable
+        │
+        ▼
+Run
+vvp cpu.out
+        │
+        ▼
+cpu.vcd  ← waveform dump
+        │
+        ▼
+GTKWave
+```
+
+---
+
+### Why this is a significant milestone
+
+Until now, you had written each module independently. By compiling the entire project—including the top-level `cpu.v` and the testbench—you've verified that the tool can assemble the complete design into a single simulation executable.
+
+That means your project has moved from a collection of individual RTL files to an integrated design that is ready for simulation. The next step is to run `vvp sim/cpu.out`, generate a VCD waveform, and begin verifying the CPU's behavior cycle by cycle.
+
+
+vvp sim/cpu.out
+
+to make cpu.vcd
+
+finally gtkwave wave/cpu.vcd

@@ -1,0 +1,134 @@
+10.1 Purpose
+
+In a pipelined processor, multiple instructions execute simultaneously in different pipeline stages. This overlap can introduce situations where an instruction cannot proceed correctly because the required data or resources are unavailable. The Hazard Handling Unit ensures correct program execution by detecting and resolving such hazards while minimizing performance penalties.
+
+10.2 Types of Pipeline Hazards
+
+Hazard Type		Present?	Resolution
+Structural Hazard	No		Eliminated using Harvard Architecture
+Data Hazard		Yes		Forwarding + One-cycle Stall
+Control Hazard		Yes		Pipeline Flush
+
+Structural Hazard
+Decision
+Not present.
+Why?
+Instruction fetch and data memory access use separate memories.
+
+Data Hazard
+Occurs when an instruction depends on the result of an earlier instruction.
+Resolved by
+Forwarding
+Load-use stall
+
+Control Hazard
+Occurs when branches or jumps change the PC.
+Resolved by
+Branch resolution in EX
+Flush IF/ID and ID/EX
+
+10.3 Forwarding Unit
+
+Purpose
+The Forwarding Unit eliminates unnecessary pipeline stalls by supplying the most recent result directly from later pipeline stages instead of waiting for register write-back.
+
+Inputs
+Signal			Width
+ID/EX.RS1_ADDR		5
+ID/EX.RS2_ADDR		5
+EX/MEM.RD_ADDR		5
+MEM/WB.RD_ADDR		5
+EX/MEM.REG_WRITE_EN	1
+MEM/WB.REG_WRITE_EN	1
+
+Outputs
+Signal		Width
+ForwardA	2
+ForwardB	2
+
+Forwarding sources
+Value	Source
+00	Register File
+01	MEM/WB
+10	EX/MEM
+11	Reserved
+
+10.4 Load-Use Hazard Detection
+(Unavoidable stall) 
+Forwarding cannot help because memory data is not available until the MEM stage.
+Therefore we need to :
+Stall IF
+Stall ID
+Insert bubble into EX
+That is Penalty of 1 Cycle
+
+Inputs Signal
+ID/EX.MEM_READ
+ID/EX.RD_ADDR
+IF/ID.RS1_ADDR
+IF/ID.RS2_ADDR
+
+Outputs Signal
+PC_ENABLE
+IF_ID_ENABLE
+ID_EX_FLUSH
+
+10.5 Control Hazard Handling
+Branches resolved in EX
+If branch taken then Flush IF/ID ,Flush ID/EX ,Load PC with target.
+No prediction.
+
+10.6 Hazard Resolution Summary
+Hazard		Resolution	Penalty
+ALU dependency	Forwarding	0 cycles
+Load-use	1 Stall		1 cycle
+Taken Branch	Flush		2 instructions
+Structural	None		0
+
+10.7 Design Decisions
+
+Why use forwarding?
+Without forwarding, almost every dependent ALU instruction would require pipeline stalls, significantly reducing throughput.
+
+Why is load-use still stalled?
+Forwarding cannot provide data before the memory access has completed. Since the loaded value becomes available only after the MEM stage, one pipeline bubble is unavoidable.
+
+Why no branch prediction?
+The project prioritizes architectural clarity and modular RTL over aggressive performance optimization. Branch prediction would substantially increase design complexity while contributing little to the educational objectives.
+
+Why are structural hazards eliminated instead of stalled?
+Using separate instruction and data memories removes contention for memory access, simplifying the hazard handling logic and improving pipeline throughput.
+
+Which hazards exist in your processor?
+The processor encounters data hazards and control hazards. Structural hazards are eliminated through the Harvard memory architecture.
+
+Why can't forwarding solve a load-use hazard?
+The result of a load instruction is produced only after the memory access completes in the MEM stage. The following instruction requires the operand at the beginning of the EX stage, one cycle earlier than the data becomes available. Consequently, a single-cycle stall is unavoidable.
+
+Why is forwarding possible for ALU instructions?
+The ALU result is available at the end of the Execute stage and can be forwarded directly to the next instruction without waiting for register write-back.
+
+Why are only IF and ID stalled during a load-use hazard?
+The load instruction already in EX must continue progressing to complete the memory access. Stalling the younger instructions while allowing the load to advance inserts exactly one pipeline bubble and preserves correct execution.
+
+Why do you flush IF/ID and ID/EX instead of EX/MEM?
+When a branch is resolved in EX, the instructions in IF and ID belong to the wrong control path and must be discarded. Instructions in MEM and WB are older than the branch and therefore belong to the correct execution path.
+
+??????????????????????????????????????????????????????How many forwarding paths does your processor have?
+This is one point you'll need to finalize in the datapath chapter. I expect you'll have the standard four paths:
+
+EX/MEM → ALU Operand A
+EX/MEM → ALU Operand B
+MEM/WB → ALU Operand A
+MEM/WB → ALU Operand B
+
+If those are indeed your forwarding paths, document them explicitly here. They are a common interview topic.??????????????
+
+
+10.8 Hazard Handling Hardware
+
+Hardware			Function
+Forwarding Unit			Resolves ALU data hazards
+Hazard Detection Unit		Detects load-use hazards and generates stall signals
+Pipeline Control Logic		Generates ENABLE and FLUSH signals
+Branch Unit			Resolves control hazards

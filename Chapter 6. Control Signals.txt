@@ -1,0 +1,142 @@
+6.1 Purpose of the Control Unit
+The control unit interprets the decoded instruction and generates the control signals required by the datapath. These signals determine operand selection, ALU operation, memory access, write-back source, branch behavior, and register updates. Once generated in the Decode stage, the control signals are propagated through the pipeline registers until they are no longer required.
+
+6.2 Control Signal Summary
+Signal		Width	Stage Generated		Used In
+IMM_SEL		3	ID		Immediate Generator
+OP1_SEL		1	ID		ALU Input MUX
+OP2_SEL		1	ID		ALU Input MUX
+ALU_OP		5	ID		ALU
+BRANCH_JUMP	3	ID		Branch Unit
+MEM_READ	1	ID		Data Memory
+MEM_WRITE	1	ID		Data Memory
+WB_SEL		2	ID		Writeback MUX
+REG_WRITE_EN	1	ID		Register File
+
+IMM_SEL
+Purpose
+Selects the immediate format extracted from the instruction.
+Encoding
+IMM_SEL	Immediate
+000	R (None)
+001	I
+010	S
+011	B
+100	U
+101	J
+110	Reserved
+111	Reserved
+
+OP1_SEL
+Purpose
+Selects ALU operand A.
+Encoding
+Value	Operand A
+0	RS1
+1	PC
+
+OP2_SEL
+Purpose
+Selects ALU operand B.
+Encoding
+Value	Operand B
+0	RS2
+1	Immediate
+
+ALU_OP
+Purpose
+select ALU operations.
+Encoding
+ALU_OP		Operation
+00000		ADD
+00001		SUB
+00010		AND
+00011		OR
+00100		XOR
+00101		SLL
+00110		SRL
+00111		SRA
+01000		SLT
+01001		SLTU
+01010		PASS_B
+01011–11111	Reserved
+
+BRANCH_JUMP
+Purpose
+select type of Branching.
+Encoding
+BRANCH_JUMP	Meaning
+000		No Branch/Jump
+001		BEQ
+010		BNE
+011		BLT
+100		BGE
+101		JAL
+110		JALR
+111		Reserved
+
+MEM_READ
+Purpose
+Enables a read operation from the data memory.
+Encoding
+MEM_READ	Operation
+0		No memory read
+1		Read data memory
+
+MEM_WRITE
+Purpose
+Enables a write operation to the data memory.
+Encoding
+MEM_WRITE	Operation
+0		No memory write
+1		Write data memory
+
+WB_SEL
+Purpose
+selecting which source to take.
+Encoding
+WB_SEL	Source
+00	ALU Result
+01	Data Memory
+10	PC+4
+11	Reserved
+
+REG_WRITE_EN
+Purpose
+selecting Reg.
+Encoding
+Value	Meaning
+0	No Register Write
+1	Enable Register Write
+
+
+not all of these Control signals will be used till end of cycle
+signal		Last Pipeline Stage Used
+IMM_SEL		ID
+OP1_SEL		EX
+OP2_SEL		EX
+ALU_OP		EX
+BRANCH_JUMP	EX
+MEM_READ	MEM
+MEM_WRITE	MEM
+WB_SEL		WB
+REG_WRITE_EN	WB
+
+Why generate all control signals in Decode? Decode is the only stage that interprets the instruction, avoiding repeated decoding downstream.
+Why use fixed-width encoded signals? Encoded control buses reduce wiring and make interfaces scalable compared with individual one-hot control lines.
+Why keep reserved encodings? They support future ISA extensions without altering the module interfaces.
+
+Why are encoded control signals used?
+Decision
+Operations such as ALU functions and branch types are represented using encoded control signals rather than individual one-hot control lines.
+Why?
+Encoded signals reduce the number of wires between modules and simplify the interfaces. They also provide reserved encodings for future ISA extensions without modifying the processor architecture.
+
+Why are MEM_READ and MEM_WRITE separate signals?
+Decision
+Memory read and write operations are controlled using two independent one-bit signals.
+Why?
+The memory interface closely follows the classical datapath described in Hennessy and Patterson, where read and write operations are independently controlled. This makes the datapath easier to understand and simplifies the memory control logic for the supported instruction subset (LW and SW).
+
+Why isn't IMM_SEL propagated beyond the Decode stage?
+IMM_SEL is only required by the Immediate Generator to determine how the immediate field should be extracted from the instruction. Once the 32-bit immediate has been generated, the selection information has served its purpose and is no longer needed.

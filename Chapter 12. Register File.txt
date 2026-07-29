@@ -1,0 +1,86 @@
+12.1 Purpose
+
+The Register File stores the processor's architectural registers and provides operands for instruction execution. It supports simultaneous reading of two source registers and writing of one destination register, allowing register-to-register and register-immediate instructions to execute efficiently within the five-stage pipeline.
+
+12.2 Organization
+Parameter		Value
+Number of Registers	32
+Register Width		32 bits
+Read Ports		2
+Write Ports		1
+Register x0		Constant Zero
+
+12.3 Interface
+
+Inputs
+Signal		Width	Description
+RS1_ADDR	5	Read Address 1
+RS2_ADDR	5	Read Address 2
+RD_ADDR		5	Write Address
+WRITE_DATA	32	Data to be written
+REG_WRITE_EN	1	Write Enable
+CLK		1	Clock
+RESET		1	Reset
+
+Outputs
+Signal		Width	Description
+RS1_DATA	32	Read Data 1
+RS2_DATA	32	Read Data 2
+
+12.4 Read and Write Operation
+
+Read
+Two registers can be read simultaneously using the source register addresses supplied by the instruction.
+Reads are combinational.
+
+Write
+One register is written during the Write-Back stage.
+Writes occur on the active clock edge when
+REG_WRITE_EN = 1
+
+12.5 Register x0
+RISC-V defines register x0 as a hardwired zero register.
+Characteristics:
+Always contains zero.
+Reads always return zero.
+Writes are ignored.
+This behavior is enforced by the Register File implementation.
+If software attempts to write to x0, Then write is ignored. Register x0 is hardwired to zero and always returns zero regardless of any attempted write operation.
+
+Register	Purpose
+x0		Constant zero (hardwired)
+x1–x31		General-purpose registers
+
+12.6 Design Decisions
+
+Why two read ports?
+Most instructions require two source operands. Two independent read ports allow both operands to be read simultaneously during the Decode stage.
+
+Why one write port?
+The processor is single-issue and retires at most one instruction per cycle. Therefore only one register write can occur during each clock cycle.
+
+Why are reads combinational?
+Combinational reads allow operand values to become available immediately during the Decode stage, enabling execution in the following cycle without introducing additional pipeline latency.
+
+Why are writes synchronous?
+Synchronous writes ensure that register updates occur only on clock edges, preventing race conditions and maintaining predictable pipeline timing.
+
+Why is only one write port sufficient?
+The processor is a single-issue, in-order pipeline that completes at most one instruction per cycle. Consequently, only one architectural register can be updated during each write-back stage.
+
+What would change if the processor became dual-issue?
+A dual-issue processor could retire two instructions in the same cycle, requiring at least two write ports and additional read ports. The increased port count significantly increases the complexity and area of the Register File.
+
+12.7 Architectural Register Set
+The processor implements the standard RV32I architectural register set consisting of thirty-two 32-bit integer registers. Although all registers except x0 are identical in hardware, the RISC-V ABI assigns conventional software roles to each register.
+
+The stack pointer (sp, register x2) points to the current top of the program's stack, which stores function call information such as local variables, saved registers, and return addresses.
+
+return address register
+When jal ra, function is executed, the processor writes PC + 4 into x1 (ra) Later,
+jalr x0, ra, 0
+returns to the caller.
+
+x2 called the stack pointer software (compiler/ABI) decided that x2 will contain the address of the stack (not enforced by Hardware)
+
+x10–x17 (a0–a7) are Function arguments / return values
