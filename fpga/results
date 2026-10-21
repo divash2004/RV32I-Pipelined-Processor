@@ -1,0 +1,158 @@
+# FPGA Implementation Results
+
+## 1. Implementation Platform
+
+| Parameter       | Value                                 |
+|-----------------|---------------------------------------|
+| Processor         | RV32I five-stage pipelined processor|
+| FPGA board        | Digilent Basys 3                    |
+| FPGA family       | AMD/Xilinx Artix-7                  |
+| FPGA part         | XC7A35T-1CPG236C                    |
+| Design language   | Verilog HDL                         |
+| Clock constraint  | 10 ns (100 MHz)                     |
+
+## 2. Timing Analysis
+
+The Vivado Design Timing Summary reports that all user-specified timing constraints are met.
+
+| Timing metric                           | Result    |
+|-----------------------------------------|-----------|
+| Worst Negative Slack (WNS)              | +6.406 ns |
+| Total Negative Slack (TNS)              | 0.000 ns  |
+| Setup failing endpoints                 | 0         |
+| Total setup endpoints                   | 27        |
+| Worst Hold Slack (WHS)                  | +0.252 ns |
+| Total Hold Slack (THS)                  | 0.000 ns  |
+| Hold failing endpoints                  | 0         |
+| Total hold endpoints                    | 27        |
+| Worst Pulse Width Slack (WPWS)          | +4.500 ns |
+| Total Pulse Width Negative Slack (TPWS) | 0.000 ns  |
+| Pulse-width failing endpoints           | 0         |
+| Total pulse-width endpoints             | 28        |
+
+**Timing status:** All user-specified timing constraints are met.
+
+The design was constrained to a 10 ns clock period. The reported positive setup and hold slack indicate timing margin under the applied constraints and implementation conditions.
+
+## 3. FPGA Resource Utilization
+
+### 3.1 Slice Logic
+
+| Resource                 | Used  | Available  | Utilization |
+|--------------------------|-------|------------|-------------|
+| Slice LUTs               | 1,445 | 20,800     | 6.95%       |
+| LUT as Logic             | 933   | 20,800     | 4.49%       |
+| LUT as Memory            | 512   | 9,600      | 5.33%       |
+| LUT as Distributed RAM   | 512   | —          | —           |
+| LUT as Shift Register    | 0     | —          | —           |
+| Slice Registers          | 999   | 41,600     | 2.40%       |
+| Registers as Flip-Flops  | 999   | 41,600     | 2.40%       |
+| Registers as Latches     | 0     | 41,600     | 0.00%       |
+| F7 Muxes                 | 256   | 16,300     | 1.57%       |
+| F8 Muxes                 | 128   | 8,150      | 1.57%       |
+| Unique Control Sets      | 23    | 8,150      | 0.28%       |
+
+### 3.2 Primitive Utilization
+
+| Primitive | Count |
+|-----------|-------|
+| FDCE      | 967 |
+| FDRE      | 32  |
+| RAMS64E   | 512 |
+| LUT6      | 469 |
+| LUT2      | 267 |
+| LUT4      | 174 |
+| LUT5      | 170 |
+| LUT3      | 27  |
+| LUT1      | 2   |
+| MUXF7     | 256 |
+| MUXF8     | 128 |
+| CARRY4    | 57  |
+| BUFG      | 2   |
+| IBUF      | 2   |
+| OBUF      | 16  |
+
+The implementation uses distributed memory and combinational logic in addition to flip-flops. No inferred latches were reported.
+
+### 3.3 Additional Synthesis Statistics
+
+The RTL component statistics report the following structures:
+
+| Component | Configuration    | Count |
+|-----------|------------------|-------|
+| Adders    | 2-input, 32-bit | 3 |
+| Adders    | 3-input, 32-bit | 1 |
+| XORs      | 2-input, 32-bit | 1 |
+| Registers | 32-bit          | 47 |
+| Registers | 5-bit           | 6 |
+| Registers | 3-bit           | 1 |
+| Registers | 2-bit           | 3 |
+| Registers | 1-bit           | 9 |
+| Muxes     | 4-input, 32-bit | 4 |
+| Muxes     | 12-input, 32-bit | 1 |
+| Muxes     | 2-input, 32-bit | 12 |
+| Muxes     | 2-input, 5-bit | 4 |
+| Muxes     | 8-input, 4-bit | 2 |
+| Muxes     | 5-input, 3-bit | 1 |
+| Muxes     | 2-input, 3-bit | 1 |
+| Muxes     | 4-input, 2-bit | 1 |
+| Muxes     | 2-input, 2-bit | 3 |
+| Muxes     | 2-input, 1-bit | 36 |
+
+
+## 4. Power Analysis
+
+Vivado reports the following estimated on-chip power:
+
+| Power metric        | Result  |
+|---------------------|---------|
+| Total on-chip power | 0.125 W |
+| Dynamic power       | 0.053 W |
+| Device static power | 0.072 W |
+| Clock power         | 0.001 W |
+| Signal power        | 0.013 W |
+| Logic power         | 0.008 W |
+| I/O power           | 0.031 W |
+
+### 4.1 Thermal and Analysis Conditions
+
+| Parameter             | Reported value |
+|-----------------------|----------------|
+| Process               | Typical        |
+| Junction temperature  | 25.6 °C        |
+| Ambient temperature   | 25.0 °C        |
+| Effective θJA         | 5.0 °C/W       |
+| Thermal margin        | 59.4 °C (11.8 W) |
+| Confidence level      | Low            |
+
+
+
+
+## 5. Timing Analysis Configuration
+
+The reported timer settings are:
+
+| Setting                        | Value |
+|-------------------------------|----------|
+| Multi-corner analysis         | Enabled |
+| Pessimism removal             | Enabled |
+| Pessimism removal resolution  | Nearest Common Node |
+| Input-delay default clock     | Disabled |
+| Preset/clear arcs             | Disabled |
+| Flight delays                 | Enabled |
+| Ignore I/O paths              | Disabled |
+| Timing early launch at borrowing latches | Disabled |
+| Borrow time for maximum-delay exceptions | Enabled |
+| Merge timing exceptions       | Enabled |
+| Inter-SLR compensation        | Conservative |
+
+Multi-corner analysis covers both slow and fast corners for maximum-delay and minimum-delay paths.
+
+## 6. Summary
+
+The RV32I pipelined processor was implemented for the Digilent Basys 3 Artix-7 FPGA. Under the specified 10 ns clock constraint, the reported timing summary shows positive setup and hold slack, with no failing endpoints.
+
+The implementation uses 1,445 slice LUTs and 999 slice registers, corresponding to 6.95% LUT utilization and 2.40% register utilization. Vivado estimates total on-chip power at 0.125 W, with low confidence in the estimate.
+
+
+
