@@ -12,28 +12,11 @@ This directory contains the FPGA-specific constraints, implementation configurat
 | Design tool         | AMD Vivado                   |
 | Top-level module    | `cpu`                        |
 
-## Implementation Results
 
-The processor was synthesized and implemented for the target FPGA using Vivado.
-
-### Resource Utilization
-
-| Resource   | Used  | Device capacity | Utilization |
-|------------|-------|-----------------|-------------|
-| LUTs       | 1,484 | 20,800          | 7.13%       |
-| Flip-flops | 972   | 41,600          | 2.34%       |
-
-
-### Timing Results
-
-Recording the following values from the final implementation reports:
-
-| Metric                      | Result      |
-|-----------------------------|-------------|
-| Target clock period         | To be added |
-| Worst setup slack (WNS)     | To be added |
-| Worst hold slack (WHS)      | To be added |
-| Maximum operating frequency | To be added |
+Family	Artix-7
+Device	XC7A35T
+Package	CPG236
+Speed grade	-1
 
 
 
