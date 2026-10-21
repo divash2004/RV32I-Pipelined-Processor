@@ -1,0 +1,41 @@
+Objective
+Design, implement and synthesize a modular RV32I processor core using a classical five-stage in-order pipeline (IF, ID, EX, MEM, WB). The processor targets implementation on the Digilent Basys 3 (Artix-7) FPGA and serves both as a study of processor microarchitecture and as a portfolio-quality RTL design project.
+
+Design Goals
+
+Correctly execute the supported RV32I instruction subset (defined in Chapter 3).
+Maintain strict separation between control logic (Control Unit), datapath (ALU, register file, immediate generator), and pipeline sequencing (pipeline registers).
+Handle data hazards via forwarding and stalling; handle control hazards via flushing (mechanism detailed in Chapter 10).
+Prioritize clean, readable, modular RTL over micro-optimized or highly compressed logic.
+Verify each module independently before integration (per Chapter 15).
+Ensure each pipeline stage communicates exclusively through well-defined pipeline registers.
+
+Supported ISA
+RV32I Base Integer ISA restricted to the instruction subset specified in Chapter 3.
+
+Assumptions
+
+Architectural Assumptions
+Single-core
+Single-issue
+In-order execution
+Harvard memory architecture
+Ideal instruction and data memories
+
+Implementation Assumptions
+RTL written in synthesizable Verilog
+Simulation performed using Icarus Verilog and GTKWave
+FPGA implementation performed using Vivado 2025.2
+Target platform: Digilent Basys 3 (Artix-7 XC7A35T)
+
+Success Criteria
+
+The processor shall:
+
+Execute every supported instruction correctly.
+Correctly resolve RAW hazards using forwarding.
+Correctly stall on load-use hazards.
+Correctly flush the pipeline after taken branches and jumps.
+Produce correct architectural state for all supported test programs.
+Pass module-level and processor-level verification.
+Synthesize successfully on the Basys 3 FPGA.

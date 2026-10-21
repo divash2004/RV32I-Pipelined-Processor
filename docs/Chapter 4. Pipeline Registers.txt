@@ -1,0 +1,195 @@
+Pipeline registers carry only the data and decoded control information required by downstream stages. The original instruction is discarded after decode unless a later stage explicitly requires one of its fields. So we will not carry forward the whole instruction, Propagate the full instruction only through IF/ID (input to decode). From ID/EX onward, propagate only the decoded fields required downstream FLUSH is not necessarily required on every pipeline register.Once an instruction has reached EX or MEM, it is generally allowed to complete, only younger instructions are flushed. So IF/ID and ID/EX needs stall and FLUSH.
+
+4.1 IF/ID Pipeline Register
+Data Inputs
+Signal		Width	
+PC_IN		32	
+PC_4_IN		32	
+INSTRUCTION_IN	32	
+
+Control Inputs
+Signal		Width
+CLK		1
+RESET		1
+ENABLE		1
+FLUSH		1
+
+Data Outputs
+Signal		Width
+PC_OUT		32
+pc_4_out	32
+INSTRUCTION_OUT	32
+
+control output
+none
+
+
+4.2 ID/EX Pipeline Register
+Data Inputs
+Signal		Width	
+PC_IN		32	
+PC_4_IN		32	
+RS1_DATA_IN	32	
+RS2_DATA_IN	32	
+IMM_IN		32	
+RS1_ADDR_IN	5	
+RS2_ADDR_IN	5	
+RD_ADDR_IN	5	
+
+Control Inputs
+Signal		Width
+OP1_SEL_IN	1
+OP2_SEL_IN	1
+ALU_OP_IN	5
+BRANCH_JUMP_IN	3
+MEM_READ_IN	1
+MEM_WRITE_IN	1
+WB_SEL_IN	2
+REG_WRITE_EN_IN	1
+CLK		1
+RESET		1
+ENABLE		1
+FLUSH		1
+
+Data Outputs
+Signal		Width
+PC_OUT		32
+PC_4_OUT	32
+RS1_DATA_OUT	32
+RS2_DATA_OUT	32
+IMM_OUT		32
+RS1_ADDR_OUT	5
+RS2_ADDR_OUT	5
+RD_ADDR_OUT	5
+
+Control Outputs
+Signal			Width
+OP1_SEL_OUT		1
+OP2_SEL_OUT		1
+ALU_OP_OUT		5
+BRANCH_JUMP_OUT		3
+MEM_READ_OUT		1
+MEM_WRITE_OUT		1
+WB_SEL_OUT		2
+REG_WRITE_EN_OUT	1
+
+
+4.3 EX/MEM Pipeline Register
+
+
+Data Inputs
+Signal		Width	
+PC_4_IN		32	
+ALU_RESULT_IN	32	
+RS2_DATA_IN	32		
+RD_ADDR_IN	5	
+
+Control Inputs
+Signal		Width
+MEM_READ_IN	1
+MEM_WRITE_IN	1
+WB_SEL_IN	2
+REG_WRITE_EN_IN	1
+CLK		1
+RESET		1
+ENABLE		1
+
+Data Outputs
+Signal		Width
+PC_4_OUT	32
+ALU_RESULT_OUT	32
+RS2_DATA_OUT	32
+RD_ADDR_OUT	5
+
+Control Outputs
+Signal			Width
+MEM_READ_OUT		1
+MEM_WRITE_OUT		1
+WB_SEL_OUT		2
+REG_WRITE_EN_OUT	1
+
+
+4.4 MEM/WB Pipeline Register
+
+Data Inputs
+Signal		Width	
+PC_4_IN		32	
+ALU_RESULT_IN	32	
+DMEM_DATA_IN	32		
+RD_ADDR_IN	5	
+
+Control Inputs
+Signal			Width
+WB_SEL_IN		2
+REG_WRITE_EN_IN		1
+CLK			1
+RESET			1
+ENABLE			1
+
+Data Outputs
+Signal		Width
+PC_4_OUT	32
+ALU_RESULT_OUT	32
+DMEM_DATA_OUT	32
+RD_ADDR_OUT	5
+
+Control Outputs
+Signal			Width
+WB_SEL_OUT		2
+REG_WRITE_EN_OUT	1
+
+
+The EX/MEM and MEM/WB pipeline registers include an enable input for interface uniformity. In the current processor implementation these enables remain permanently asserted because instructions that have entered the Execute stage are always allowed to complete.
+
+
+4.5 Design Decisions
+
+Why is the complete instruction propagated only through IF/ID?
+Decision
+The complete 32-bit instruction is propagated only through the IF/ID pipeline register. Beginning with ID/EX, only the decoded operands, register addresses, immediate value, and control signals are propagated.
+Why?
+Instruction decoding is performed only once in the Decode stage. Re-decoding the instruction in later stages would introduce unnecessary hardware and duplicate logic. Carrying only the required information reduces the amount of data stored in the pipeline registers and makes each stage independent of the instruction encoding.
+
+Trade-off
+The original instruction is no longer available in later pipeline stages for debugging or tracing. Recovering the instruction would require additional debug logic if needed.
+
+Why are source and destination register addresses propagated?
+Decision
+The decoded register addresses (RS1_ADDR, RS2_ADDR, and RD_ADDR) are propagated through the pipeline instead of the complete instruction.
+Why?
+These fields are required by the forwarding and hazard detection logic to identify data dependencies between instructions. Propagating only the register indices provides the required information while avoiding the overhead of carrying the entire instruction.
+
+Why is the immediate propagated only until the Execute stage?
+Decision
+The immediate value is propagated through the ID/EX register only.
+Why?
+The ALU uses the immediate as an operand during the Execute stage. Once the ALU has produced its result, the original immediate value is no longer required. For instructions such as LUI, the ALU performs a PASS_B operation, eliminating the need for a dedicated immediate write-back path.
+Benefit
+Narrower EX/MEM and MEM/WB pipeline registers.
+Simpler write-back multiplexer.
+More uniform datapath.
+Why do only IF/ID and ID/EX support flushing?
+Decision
+
+Flush capability is implemented only in the IF/ID and ID/EX pipeline registers.
+Why?
+Branches are resolved during the Execute stage. At that instant:
+Instructions in IF and ID are younger than the branch and must be discarded if the branch is taken.
+Instructions in MEM and WB are older than the branch and must complete to preserve precise program execution.
+Flushing later pipeline stages would incorrectly discard valid instructions.
+
+Why do EX/MEM and MEM/WB include an enable signal?
+Decision
+All pipeline registers implement a common interface that includes an enable input.
+Why?
+Although EX/MEM and MEM/WB are never stalled in the current processor, providing a uniform interface simplifies module reuse, improves readability, and allows future architectural extensions without modifying the module interface.
+In the current implementation, these enable inputs remain permanently asserted
+
+Why does LUI no longer require an immediate write-back path?
+LUI is implemented as an ALU PASS_B operation. The immediate is selected as the second ALU operand and forwarded unchanged to the ALU result. Consequently, the write-back stage receives the value through the existing ALU result path, eliminating the need for a separate immediate write-back source.
+
+Why is PC+4 propagated through three pipeline registers?
+PC+4 is required for the write-back of JAL and JALR. Since write-back occurs in the WB stage, the value must be preserved as the instruction progresses through the pipeline.
+
+Why is the original PC propagated only to ID/EX?
+The original program counter is only needed during the Execute stage for operations such as AUIPC and branch target address calculation (PC + immediate). Once execution is complete, the original PC has no further purpose and is therefore not propagated.
