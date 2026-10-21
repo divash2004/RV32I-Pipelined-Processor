@@ -105,16 +105,49 @@ The repository also contains architecture notes, instruction-format material, an
 ## FPGA Implementation
 
 **Target platform:** Digilent Basys 3  
-**FPGA:** AMD/Xilinx Artix-7 `XC7A35T`  
+**FPGA:** AMD/Xilinx Artix-7 `XC7A35T-1CPG236C`  
 **HDL:** Verilog  
-**Synthesis and implementation:** AMD Vivado
+**Synthesis and implementation:** AMD Vivado  
+**Clock constraint:** 10 ns (100 MHz)
 
-The processor was synthesized, implemented, and programmed onto the FPGA. The reported implementation resource utilization was:
+The RV32I pipelined processor was synthesized and implemented, and bitstream generation completed successfully.
 
-| Resource               | Utilization | Device utilization |
-|------------------------|-------------|--------------------|
-| Look-up tables (LUTs)  | 1,484       | 7.13%              |
-| Flip-flops (FFs)       | 972         | 2.34%              |
+### Resource Utilization
+
+| Resource                               | Used  | Device capacity | Utilization |
+|----------------------------------------|---    |-----------------|-------------|
+| Slice LUTs                             | 1,445 | 20,800          | 6.95%       |
+| Slice registers (flip-flops)           | 999   | 41,600          | 2.40%       |
+| LUTs configured as distributed memory  | 512   | 9,600           | 5.33%       |
+| F7 multiplexers                        | 256   | 16,300          | 1.57%       |
+| F8 multiplexers                        | 128   | 8,150           | 1.57%       |
+
+### Timing Analysis
+
+| Metric                     | Result        |
+|----------------------------|---------------|
+| Worst Negative Slack (WNS) | +6.406 ns     |
+| Total Negative Slack (TNS) | 0.000 ns      |
+| Worst Hold Slack (WHS)     | +0.252 ns     |
+| Total Hold Slack (THS)     | 0.000 ns      |
+| Worst Pulse Width Slack (WPWS) | +4.500 ns |
+| Failing timing endpoints   | 0             |
+
+All user-specified timing constraints were met under the applied 10 ns clock constraint.
+
+### Power Estimate
+
+| Metric                     | Estimated power |
+|----------------------------|-----------------|
+| Total on-chip power        | 0.125 W         |
+| Dynamic power              | 0.053 W         |
+| Device static power        | 0.072 W         |
+
+*Power values are Vivado estimates with low reported confidence, not direct measurements.*
+
+### Implementation Evidence
+
+See [`fpga/`](fpga/README.md) for the detailed implementation results, board constraints, and reports.
 
 
 ## Engineering Scope
